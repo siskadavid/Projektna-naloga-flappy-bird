@@ -1,7 +1,7 @@
 pub struct Ptica {
     x: f32,
     y: f32,
-    hitrost: f32,
+    hitrost: f32, // Navpična hitrost (če je pozitivna ptica pada, če pa je negativna leti gor)
 }
 
 impl Ptica {
