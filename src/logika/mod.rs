@@ -19,7 +19,7 @@ pub struct StanjeIgre {
 
 impl StanjeIgre {
     pub fn new() -> Self{
-        StanjeIgre { ptica: Ptica::new(50.0, 150.0 ), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0 }
+        StanjeIgre { ptica: Ptica::new(150.0), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0 }
         }
 
     pub fn premikanje(&mut self) {
