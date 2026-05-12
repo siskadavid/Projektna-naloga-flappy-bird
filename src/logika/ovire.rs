@@ -16,7 +16,7 @@ impl Ovire {
     }
 
     pub fn nova_ovira(&mut self) {
-        self.x = PRVI_X_OVIRE;      // to tud se ne vem tocno kako je v rustu kr bo obstajal vec okvir naenkrat tko da ne vem a je to prava ideja
+        self.x = PRVI_X_OVIRE;
     }
 
     pub fn premik_cevi(&mut self) {

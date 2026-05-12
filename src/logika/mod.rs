@@ -1,6 +1,6 @@
-mod ptica;
-mod ovire;
-mod konstante;
+pub mod ptica;
+pub mod ovire;
+pub mod konstante;
 
 pub use ptica::Ptica;
 pub use ovire::Ovire;
@@ -11,21 +11,20 @@ pub enum GameMode {
     KonecIgre,
 }
 pub struct StanjeIgre {
-    ptica: Ptica,
-    ovire: Vec<Ovire>,
+    pub ptica: Ptica,
+    pub ovire: Vec<Ovire>,
     pub mode: GameMode,
     pub rezultat: u32,
 }
 
 impl StanjeIgre {
     pub fn new() -> Self{
-        StanjeIgre { ptica: Ptica::new(150.0), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0 }
+        StanjeIgre {ptica: Ptica::new(), ovire: Vec::new(), mode: GameMode::Igra, rezultat: 0}
         }
 
     pub fn premikanje(&mut self) {
-            self.ptica.gravitacija(konstante::GRAVITACIJA);
+            self.ptica.gravitacija();
             
             // premik ovir
     }
 }
-
