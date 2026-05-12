@@ -24,68 +24,17 @@ async fn main() {
     let mut igra = StanjeIgre::new();
 
     let scaled_x_ozadja = ozadje_texture.width() * (VISINA_ZASLONA / ozadje_texture.height());      // Macroquad nima možnosti nastavitve ki ohrani aspect ratio, zato ga izračunamo
-    let mut ozadje_x: f32 = 0.0;                    // Tla in ozadje se bosta premikala za dodatno iluzijo gibanja, to dosežemo z dvema setoma istih slik ki se premikata po ekranu
-    let mut tla_x: f32 = 0.0;
-
 
     // Glavna zanka, kjer se izvaja igra
     loop {
-        // Risanje ozadja
-        ozadje_x -= HITROST_OVIRE / 10.0;        // Ozadje se premika počasneje kot ovire za občutek globine
-
-        if ozadje_x <= -scaled_x_ozadja {       // Ko pride ena slika ozadja preveč naprej jo prestavimo nazaj
-            ozadje_x = 0.0
-        }
-
-        draw_texture_ex(
-            &ozadje_texture,
-            ozadje_x, 0.0, WHITE,       // Ne spreminjamo barve na sliki
-            DrawTextureParams {
-                dest_size: Some(vec2(scaled_x_ozadja, VISINA_ZASLONA)),
-                ..Default::default()
-            },
-        );
-
-        draw_texture_ex(                        // Druga kopija slike ozadja z zamikom
-            &ozadje_texture,
-            ozadje_x + scaled_x_ozadja, 0.0, WHITE,
-            DrawTextureParams {
-                dest_size: Some(vec2(scaled_x_ozadja, VISINA_ZASLONA)),
-                ..Default::default()
-            },
-        );
-        
-        // Risanje tal
-        tla_x -= HITROST_OVIRE;
-
-        if tla_x <= -SIRINA_ZASLONA {
-            tla_x = 0.0
-        }
-
-        draw_texture_ex(                        // Za tla naredimo podobno kot za ozadje
-                &tla_texture,
-                tla_x, VISINA_ZASLONA - 100.0, WHITE,
-                DrawTextureParams {
-                    dest_size: Some(vec2(SIRINA_ZASLONA, 100.0)),
-                    ..Default::default()
-                },
-            );
-            draw_texture_ex(
-                &tla_texture,
-                tla_x + SIRINA_ZASLONA, VISINA_ZASLONA - 100.0, WHITE,
-                DrawTextureParams {
-                    dest_size: Some(vec2(SIRINA_ZASLONA, 100.0)),
-                    ..Default::default()
-                },
-            );
-        
+        // Preverimo v katerem stanju je program
         match igra.mode {
 
             // Program v stanju Menu
             GameMode::Menu => {
 
-                igra.ptica.menu_stanje();
-                draw_text("PRITISNI PRESLEDEK", SIRINA_ZASLONA / 2.0 - 230.0, VISINA_ZASLONA / 2.0 - 50.0, 60.0, WHITE);
+                igra.bg(scaled_x_ozadja);               // Tla in ozadje se bosta premikala za dodatno iluzijo gibanja, to dosežemo z dvema setoma istih slik ki se premikata po ekranu
+                igra.ptica.nihanje(get_time());
 
                 if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
                     igra.mode = GameMode::Igra;
@@ -96,8 +45,9 @@ async fn main() {
             // Program v stanju Igra
             GameMode::Igra => {
 
-                // Računanje pozicije ptice
+                igra.bg(scaled_x_ozadja);
 
+                // Računanje pozicije ptice
                 igra.ptica.rotiranje();
 
                 if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
@@ -124,10 +74,47 @@ async fn main() {
             }
         }
 
+        // Risanje ozadja
+        draw_texture_ex(
+            &ozadje_texture,
+            igra.ozadje_x, 0.0, WHITE,       // Ne spreminjamo barve na sliki
+            DrawTextureParams {
+                dest_size: Some(vec2(scaled_x_ozadja, VISINA_ZASLONA)),
+                ..Default::default()
+            },
+        );
+
+        draw_texture_ex(                        // Druga kopija slike ozadja z zamikom
+            &ozadje_texture,
+            igra.ozadje_x + scaled_x_ozadja, 0.0, WHITE,
+            DrawTextureParams {
+                dest_size: Some(vec2(scaled_x_ozadja, VISINA_ZASLONA)),
+                ..Default::default()
+            },
+        );
+        
+        // Risanje tal
+        draw_texture_ex(
+                &tla_texture,
+                igra.tla_x, VISINA_ZASLONA - 100.0, WHITE,
+                DrawTextureParams {
+                    dest_size: Some(vec2(SIRINA_ZASLONA, 100.0)),
+                    ..Default::default()
+                },
+            );
+            draw_texture_ex(
+                &tla_texture,
+                igra.tla_x + SIRINA_ZASLONA, VISINA_ZASLONA - 100.0, WHITE,
+                DrawTextureParams {
+                    dest_size: Some(vec2(SIRINA_ZASLONA, 100.0)),
+                    ..Default::default()
+                },
+            );
+
         // Risanje ptice
         draw_rectangle(         // Za ptico narišemo njen neviden "hitbox" s katerim bomo preverjali ali se je zadela v oviro
             X_PTICE, igra.ptica.pozicija() + 16.0, SIRINA_PTICE, VISINA_PTICE - 20.0,
-            Color::new(1.0, 1.0, 0.0, 0.3)  
+            Color::new(1.0, 1.0, 0.0, 0.0)  
         );
 
         draw_texture_ex(
@@ -139,6 +126,18 @@ async fn main() {
                 ..Default::default()
             },
         );
+
+        // Risanje teksta
+        match igra.mode {
+            GameMode::Menu => {
+                draw_text("PRITISNI PRESLEDEK", SIRINA_ZASLONA / 2.0 - 230.0, VISINA_ZASLONA / 2.0 - 50.0, 60.0, WHITE);
+            }
+            GameMode::KonecIgre => {
+                draw_text("GAME OVER", SIRINA_ZASLONA / 2.0 - 125.0, VISINA_ZASLONA / 2.0 - 150.0, 60.0, RED);
+                draw_text("Pritisni za ponovni zacetek", SIRINA_ZASLONA / 2.0 - 240.0, VISINA_ZASLONA / 2.0 - 50.0, 40.0, WHITE);
+            }
+            _ => {}
+        }
 
         next_frame().await              // Async funkcija se izvede enkrat na frame, počakamo na naslednjega
     }
