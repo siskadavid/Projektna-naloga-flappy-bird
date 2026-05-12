@@ -1,4 +1,4 @@
-use crate::logika::konstante::{HITROST_OVIRE, PRVI_X_OVIRE, SIRINA_OVIRE, SIRINA_ZASLONA};
+use crate::logika::konstante::*;
 
 pub struct Ovire {
     x: f32,
@@ -16,7 +16,7 @@ impl Ovire {
     }
 
     pub fn nova_ovira(&mut self) {
-        self.x = PRVI_X_OVIRE;
+        self.x = ZACETNI_X_OVIRE;
     }
 
     pub fn premik_cevi(&mut self) {

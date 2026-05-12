@@ -1,4 +1,4 @@
-use crate::logika::konstante::{GRAVITACIJA, MAX_HITROST, MOC_SKOKA, PRVI_Y_PTICE};
+use crate::logika::konstante::*;
 
 pub struct Ptica {
     y: f32,
@@ -8,7 +8,7 @@ pub struct Ptica {
 
 impl Ptica {
     pub fn new() -> Self {
-        Ptica {y: PRVI_Y_PTICE, hitrost: 0.0, rotacija: 0.0}
+        Ptica {y: ZACETNI_Y_PTICE, hitrost: 0.0, rotacija: 0.0}
     }
 
     pub fn gravitacija(&mut self) {
@@ -30,7 +30,7 @@ impl Ptica {
         self.rotacija
     }
 
-    pub fn rotiranje(& mut self) {
+    pub fn rotiranje(&mut self) {
 
         if self.hitrost < 1.5 {
             self.rotacija = -0.5
@@ -41,10 +41,8 @@ impl Ptica {
         }
     }
 
-    pub fn menu_stanje(& mut self) {
-        self.y = PRVI_Y_PTICE;
-        self.hitrost = 0.0;
-        self.rotacija = 0.0
+    pub fn nihanje(&mut self, cas: f64) {
+        self.y = ZACETNI_Y_PTICE + (cas * 4.0).sin() as f32 * 10.0;
     }
 }
 

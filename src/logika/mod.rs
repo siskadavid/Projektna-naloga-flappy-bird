@@ -1,3 +1,5 @@
+use crate::logika::konstante::*;
+
 pub mod ptica;
 pub mod ovire;
 pub mod konstante;
@@ -15,13 +17,31 @@ pub struct StanjeIgre {
     pub ovire: Vec<Ovire>,
     pub mode: GameMode,
     pub rezultat: u32,
+    pub ozadje_x: f32,
+    pub tla_x: f32
 }
 
 impl StanjeIgre {
+    // Nova igra
     pub fn new() -> Self{
-        StanjeIgre {ptica: Ptica::new(), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0}
+        StanjeIgre {ptica: Ptica::new(), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0, ozadje_x: 0.0, tla_x: 0.0}
         }
+    
+    // Računanje pozicije tal in ozadja
+    pub fn bg(&mut self, scaled_x_ozadja: f32) {
+        self.ozadje_x -= HITROST_OVIRE / 10.0;        // Ozadje se premika počasneje kot ovire za občutek globin
 
+        if self.ozadje_x <= -scaled_x_ozadja {       // Ko pride ena slika ozadja preveč naprej jo prestavimo nazaj
+            self.ozadje_x = 0.0
+        }
+        
+        self.tla_x -= HITROST_OVIRE;
+        if self.tla_x <= -SIRINA_ZASLONA {
+            self.tla_x = 0.0
+        }
+    }
+
+    // Računanje premikov ptice in ovir
     pub fn premikanje(&mut self) {
             self.ptica.gravitacija();
             
