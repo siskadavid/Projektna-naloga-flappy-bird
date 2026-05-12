@@ -2,11 +2,7 @@ use macroquad::prelude::*;
 
 mod logika;
 
-use logika::{GameMode, StanjeIgre};
-use logika::konstante::{SIRINA_ZASLONA, VISINA_ZASLONA, SIRINA_PTICE, VISINA_PTICE};
-
-use crate::logika::konstante::{HITROST_OVIRE};
-
+use logika::{GameMode, StanjeIgre, konstante::*};
 
 // Nastavitve za okno
 fn window_conf() -> Conf {
@@ -43,7 +39,7 @@ async fn main() {
 
         draw_texture_ex(
             &ozadje_texture,
-            ozadje_x, 0.0, WHITE,
+            ozadje_x, 0.0, WHITE,       // Ne spreminjamo barve na sliki
             DrawTextureParams {
                 dest_size: Some(vec2(scaled_x_ozadja, VISINA_ZASLONA)),
                 ..Default::default()
@@ -83,35 +79,63 @@ async fn main() {
                 },
             );
         
-        // Računanje pozicije ptice
-        if is_key_pressed(KeyCode::Space) {
-            igra.ptica.kriljenje();
+        match igra.mode {
+
+            // Program v stanju Menu
+            GameMode::Menu => {
+
+                igra.ptica.menu_stanje();
+                draw_text("PRITISNI PRESLEDEK", SIRINA_ZASLONA / 2.0 - 230.0, VISINA_ZASLONA / 2.0 - 50.0, 60.0, WHITE);
+
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                    igra.mode = GameMode::Igra;
+                    igra.ptica.kriljenje();
+                }
+            }
+            
+            // Program v stanju Igra
+            GameMode::Igra => {
+
+                // Računanje pozicije ptice
+
+                igra.ptica.rotiranje();
+
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                    igra.ptica.kriljenje();
+                }
+            
+                igra.premikanje();
+
+                // Tukaj še manjka koda za ovire
+
+                // Preverimo ali smo na tleh
+                if igra.ptica.pozicija() > VISINA_ZASLONA - 200.0 {
+                    igra.mode = GameMode::KonecIgre
+                }
+            }
+
+            // Program v stanju KonecIgre
+            GameMode::KonecIgre => {
+
+                // Tukaj manjka še game over ekran
+                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                    igra = StanjeIgre::new();
+                }
+            }
         }
 
-        igra.premikanje();
-
         // Risanje ptice
-        let (ptica_x, ptica_y) = igra.ptica.pozicija();
-
-        let rotacija = if igra.ptica.trenutna_hitrost() < 1.5 {     // Držimo nos ptice gor še nekaj časa po kriljenju
-            -0.5 
-        } else if igra.ptica.trenutna_hitrost() < 2.0 {                 // Vmesna faza da nos ne skoči preveč
-            0.0
-        } else {
-            igra.ptica.trenutna_hitrost() * 0.2
-        };
-
         draw_rectangle(         // Za ptico narišemo njen neviden "hitbox" s katerim bomo preverjali ali se je zadela v oviro
-            ptica_x, ptica_y, SIRINA_PTICE, VISINA_PTICE,
-            Color::new(1.0, 1.0, 0.0, 0.0)  
+            X_PTICE, igra.ptica.pozicija() + 16.0, SIRINA_PTICE, VISINA_PTICE - 20.0,
+            Color::new(1.0, 1.0, 0.0, 0.3)  
         );
 
         draw_texture_ex(
             &ptica_texture,
-            ptica_x, ptica_y, WHITE,       // Ne spreminjamo barve na sliki
+            X_PTICE, igra.ptica.pozicija(), WHITE,
             DrawTextureParams {
                 dest_size: Some(vec2(SIRINA_PTICE, VISINA_PTICE)),
-                rotation: rotacija,
+                rotation: igra.ptica.trenutna_rotacija(),
                 ..Default::default()
             },
         );
@@ -120,9 +144,7 @@ async fn main() {
     }
 }
 
-// Preverjanje če je y ptice dovolj velik (se dotika tal) da končamo igro (gamestate)
 
-// Ob zagonu programa je ptica najprej na miru v zraku in se premikajo tla (gamestate menu), ko se prvič klikne presledek se začne igra (spremeni tudi gamestate)
-// Ponovni zagon igre ob kliku na space
+// Dodat ovire in točkovanje, high score
 
-// Dodat ovire in točke in vse
+// Dodat game over ekran, smrt animacija, zvočne učinke, pavza
