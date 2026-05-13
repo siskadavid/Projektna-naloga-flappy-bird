@@ -10,6 +10,7 @@ pub use ovire::Ovire;
 pub enum GameMode {
     Menu,
     Igra,
+    Pavza,
     KonecIgre,
 }
 pub struct StanjeIgre {
@@ -18,17 +19,19 @@ pub struct StanjeIgre {
     pub mode: GameMode,
     pub rezultat: u32,
     pub ozadje_x: f32,
-    pub tla_x: f32
+    pub tla_x: f32,
+    pub glasba: bool
 }
 
 impl StanjeIgre {
     // Nova igra
     pub fn new() -> Self{
-        StanjeIgre {ptica: Ptica::new(), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0, ozadje_x: 0.0, tla_x: 0.0}
+        StanjeIgre {ptica: Ptica::new(), ovire: Vec::new(), mode: GameMode::Menu, rezultat: 0, ozadje_x: 0.0, tla_x: 0.0, glasba: false}
         }
     
-    // Računanje pozicije tal in ozadja
+    // Računanje pozicije ozadja in tal
     pub fn bg(&mut self, scaled_x_ozadja: f32) {
+
         self.ozadje_x -= HITROST_OVIRE / 10.0;        // Ozadje se premika počasneje kot ovire za občutek globin
 
         if self.ozadje_x <= -scaled_x_ozadja {       // Ko pride ena slika ozadja preveč naprej jo prestavimo nazaj
