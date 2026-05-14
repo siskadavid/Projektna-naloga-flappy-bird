@@ -33,6 +33,7 @@ impl StanjeIgre {
             // retain obdrži samo tiste elemente, kjer je bool 'true', druge zavrže
             self.ovire.retain(|ovira| {
                 let je_na_zaslonu = !ovira.mimo_zaslona();
-                je_na_zaslonu}); 
+                je_na_zaslonu});
+            
     }
 }
