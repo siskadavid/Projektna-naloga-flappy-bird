@@ -1,4 +1,4 @@
-use crate::logika::konstante::{HITROST_OVIRE, SIRINA_OVIRE, SIRINA_PTICE, VISINA_PTICE, VISINA_ODPRTINE};
+use crate::logika::konstante::*;
 
 pub struct Ovire {
     x: f32,
