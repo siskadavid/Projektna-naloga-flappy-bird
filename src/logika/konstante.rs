@@ -14,5 +14,5 @@ pub const MAX_HITROST: f32 = 8.0;
 
 pub const HITROST_OVIRE: f32 = 1.5;
 pub const SIRINA_OVIRE: f32 = 50.0;
-pub const VISINA_ODPRTINE: f32 = 100.0;
+pub const VISINA_ODPRTINE: f32 = 100.0; // verjetno treba spremeniti na 200 ali več, ker je iste velikosti kot ptica
 pub const ZACETNI_X_OVIRE: f32 = 800.0;

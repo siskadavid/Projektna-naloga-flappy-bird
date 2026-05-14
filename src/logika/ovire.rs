@@ -1,8 +1,8 @@
-use crate::logika::konstante::*;
+use crate::logika::konstante::{self, *};
 
 pub struct Ovire {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
     mimo: bool,
 }
 
@@ -20,12 +20,19 @@ impl Ovire {
     }
 
     pub fn mimo_zaslona(&self) -> bool {
-        self.x + SIRINA_OVIRE < 0.0 // ko gre mimo izhodišča (izhodišče je levo gor)
+        self.x + SIRINA_OVIRE < 0.0
+    }
+    pub fn mimo_ptice(&self) -> bool {
+        self.mimo
     }
 
-    pub fn preveri_trk(&self, ptica_x: f32, ptica_y: f32) -> bool {
-        let p_desno = ptica_x + SIRINA_PTICE;
-        let p_levo = ptica_x;
+    pub fn zavrzena_ovira(&mut self, vrednost : bool) {
+        self.mimo = vrednost
+    }
+
+    pub fn preveri_trk(&self, ptica_y: f32) -> bool {
+        let p_desno = X_PTICE + SIRINA_PTICE;
+        let p_levo = X_PTICE;
         let p_zgoraj = ptica_y;
         let p_spodaj = ptica_y + VISINA_PTICE;
 
