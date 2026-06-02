@@ -21,7 +21,6 @@ async fn main() {
     let ptica_texture: Texture2D = load_texture("slike/ptica.png").await.unwrap();
     let ozadje_texture: Texture2D = load_texture("slike/ozadje.png").await.unwrap();
     let tla_texture: Texture2D = load_texture("slike/tla.png").await.unwrap();
-    let pavza_texture: Texture2D = load_texture("slike/pavza.png").await.unwrap();
     let ovira_texture: Texture2D = load_texture("slike/ovira.png").await.unwrap();
     let flap_sound: Sound = load_sound("zvok/flap.wav").await.unwrap();
     let fall_sound: Sound = load_sound("zvok/fall.wav").await.unwrap();
