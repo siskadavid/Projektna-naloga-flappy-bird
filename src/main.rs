@@ -30,7 +30,7 @@ async fn main() {
     // let gary: Sound = load_sound("zvok/Gary.ogg").await.unwrap();
 
     // Spremenljivke na začetku igre
-    let zacetni_y_ptice = screen_height() * 0.25;
+    let zacetni_y_ptice = screen_height() * 0.30;
     let mut igra = StanjeIgre::new(zacetni_y_ptice);
     let mut trenutni_rezultat = 0;
 
@@ -53,8 +53,8 @@ async fn main() {
         }
 
         // Izračunane razne konstante, ki so odvisne od velikosti zaslona
-        let x_ptice = screen_width() * 0.25;
-        let zacetni_y_ptice = screen_height() * 0.25;
+        let x_ptice = screen_width() * 0.30;
+        let zacetni_y_ptice = screen_height() * 0.30;
         let visina_ptice = screen_height() * 0.05;
         let sirina_ptice = ptica_texture.width() * (screen_height() * 0.05 / ptica_texture.height());       // Macroquad nima možnosti nastavitve ki ohrani aspect ratio, zato ga izračunamo
 
@@ -211,21 +211,28 @@ async fn main() {
         // Risanje teksta
         match igra.mode {
             GameMode::Menu => {
-                draw_text("PRITISNI PRESLEDEK", screen_width() * 0.22, screen_height() * 0.4, screen_height() * 0.048, WHITE);
+                let dimenzija_menu = measure_text("PRITISNI PRESLEDEK", None, (screen_height() * 0.07) as u16, 1.0);
+                draw_text("PRITISNI PRESLEDEK", (screen_width() / 2.0) - (dimenzija_menu.width / 2.0), screen_height() * 0.5, screen_height() * 0.07, WHITE);
             }
             GameMode::KonecIgre => {
-                draw_text("GAME OVER", screen_width() * 0.3, screen_height() * 0.3, screen_height() * 0.065, RED);
-                draw_text("Pritisni za ponovni zacetek", screen_width() * 0.17, screen_height() * 0.35, screen_height() * 0.04, WHITE);
+                // Zatemnitev ekrana
+                draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::new(0.1, 0.0, 0.0, 0.6));
+                
+                // Game over
+                let dimenzije_game_over = measure_text("GAME OVER", None, (screen_height() * 0.20) as u16, 1.0);
+                draw_text("GAME OVER", (screen_width() / 2.0) - (dimenzije_game_over.width / 2.0), screen_height() * 0.4, screen_height() * 0.20, RED);
+
+                // Navodilo
+                let dimenzija_zacetek = measure_text("PRITISNI PRESLEDEK ZA PONOVNI ZACETEK", None, (screen_height() * 0.05) as u16, 1.0);
+                draw_text("PRITISNI PRESLEDEK ZA PONOVNI ZACETEK", (screen_width() / 2.0) - (dimenzija_zacetek.width / 2.0), screen_height() * 0.48, screen_height() * 0.05, WHITE);
+
+                // Točke
+                let dimenzija_tocke = measure_text(&format!("TOCKE: {}  REKORD: {}", igra.rezultat, trenutni_rezultat), None, (screen_height() * 0.045) as u16, 1.0);
+                draw_text(&format!("TOCKE: {}  REKORD: {}", igra.rezultat, trenutni_rezultat), (screen_width() / 2.0) - (dimenzija_tocke.width / 2.0), screen_height() * 0.55, screen_height() * 0.045, WHITE);
             }
+        // Risanje pavza ekrana        
             GameMode::Pavza => {
-                draw_texture_ex(
-                    &pavza_texture,
-                    screen_width() * 0.84, screen_height() * 0.024, WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(vec2(screen_height() * 0.1, screen_height() * 0.1)),
-                        ..Default::default()
-                    },
-                );
+                draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::new(0.1, 0.0, 0.0, 0.6));
             }
             _ => {}
         }

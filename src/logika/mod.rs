@@ -92,7 +92,9 @@ impl StanjeIgre {
             // Dodajanje točk
             if !ovira.mimo && x_ptice > ovira.x + sirina_ovire {
                 ovira.zavrzena_ovira(true);
+                if ovira.obrnjena == false{
                 self.rezultat += 1;
+                }
             }
         }
         // Retain obdrži samo tiste elemente, kjer je bool "true", ostale zavrže
