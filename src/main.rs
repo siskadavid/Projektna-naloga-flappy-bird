@@ -9,7 +9,8 @@ fn okno_konfiguracija() -> Conf {
     Conf {
         window_title: "Flappy Bird".to_string(),
         fullscreen: true,
-        window_resizable: false, 
+        window_resizable: false,
+        high_dpi: true,
         ..Default::default()
     }
 }
@@ -230,6 +231,7 @@ async fn main() {
         }
         
         // Risanje tal
+        draw_fps();
         draw_texture_ex(
                 &tla_texture,
                 igra.tla_x, screen_height() * 0.915, WHITE,
@@ -289,6 +291,3 @@ async fn main() {
         next_frame().await
     }
 }
-
-
-//lepsa koda, music toggle
