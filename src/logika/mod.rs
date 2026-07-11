@@ -1,4 +1,4 @@
-use macroquad::rand::gen_range; // Generiranje naključnih števil za višino cevi
+use macroquad::{rand::gen_range};
 
 pub mod ptica;
 pub mod ovire;
@@ -23,7 +23,7 @@ pub struct StanjeIgre {
     pub ozadje_x: f32,
     pub tla_x: f32,
     pub glasba: bool,
-    pub casovnik: f32, // Štejemo koliko časa je preteklo med kalkulacijami
+    pub casovnik: f32,
 }
 
 impl StanjeIgre {
@@ -41,62 +41,69 @@ impl StanjeIgre {
     }
     
     // Računanje pozicije ozadja in tal
-    pub fn bg(&mut self, sirina_ozadja: f32, sirina_zaslona: f32) {
+    pub fn bg(&mut self, sirina_ozadja: f32, sirina_zaslona: f32, dt: f32) {
 
-        self.ozadje_x -= HITROST_OVIRE / 10.0;        // Ozadje se premika počasneje kot ovire za občutek globin
+        self.ozadje_x -= (HITROST_OVIRE / 10.0) * dt;        // Ozadje se premika počasneje kot ovire za občutek globin
 
         if self.ozadje_x <= -sirina_ozadja {       // Ko pride ena slika ozadja preveč naprej jo prestavimo nazaj
             self.ozadje_x = 0.0
         }
         
-        self.tla_x -= HITROST_OVIRE;
+        self.tla_x -= HITROST_OVIRE * dt;
         if self.tla_x <= -sirina_zaslona {
             self.tla_x = 0.0
         }
     }
 
     // Računanje premikov ptice in ovir
-    pub fn premikanje_ptice(&mut self) {
-        self.ptica.gravitacija();
+    pub fn premikanje_ptice(&mut self, dt: f32) {
+        self.ptica.gravitacija(dt);
         self.ptica.rotiranje();
     }
 
-    pub fn premikanje_ovir(&mut self, visina_zaslona: f32, x_ptice: f32, sirina_ptice: f32, visina_ptice: f32, sirina_ovire: f32, visina_ovire: f32, velikost_odprtine: f32, zacetni_x_ovire: f32) {
-        self.casovnik += macroquad::time::get_frame_time();
+    // Preveri trk
+    pub fn preveri_trk(&mut self, x_ptice: f32, sirina_ptice: f32, visina_ptice: f32, sirina_ovire: f32, velikost_odprtine: f32) -> bool {
+        for ovira in self.ovire.iter_mut(){
+            if !ovira.obrnjena && ovira.ovira_trk(x_ptice,self.ptica.y, sirina_ptice, visina_ptice, sirina_ovire, velikost_odprtine) {
+                return true
+            }
+        }
+        false
+    }
 
-        // Vsakih 340 frameov narišemo nov par cevi
-        if self.casovnik >= 1.7 {
+    pub fn premikanje_ovir(&mut self, visina_zaslona: f32, x_ptice: f32, sirina_ovire: f32, visina_ovire: f32, velikost_odprtine: f32, zacetni_x_ovire: f32, dt: f32) {
+        self.casovnik += dt;
+        let cev_cooldown = 1.5;
+
+        // Na vsakih cel_cooldown sekund ustvarimo nov par cevi
+        if self.casovnik >= cev_cooldown {
             let tla_y = visina_zaslona * 0.915;
             let min_vidna_cev = visina_zaslona * 0.2;
             let max_y_odprtine = tla_y - velikost_odprtine - min_vidna_cev;
 
             let y_odprtine = gen_range(min_vidna_cev,  max_y_odprtine);
 
-            self.ovire.push(Ovire::new(zacetni_x_ovire, y_odprtine - visina_ovire, true));
-            self.ovire.push(Ovire::new(zacetni_x_ovire, y_odprtine + velikost_odprtine, false));
+            self.ovire.push(Ovire::new(zacetni_x_ovire, y_odprtine - visina_ovire, true));      // Zgornja cev
+            self.ovire.push(Ovire::new(zacetni_x_ovire, y_odprtine + velikost_odprtine, false));   // Spodnja cev
 
-            self.casovnik -= 1.7
+            self.casovnik -= cev_cooldown
         }
         
         // Premik vseh ovir v levo
         for ovira in self.ovire.iter_mut(){
-            ovira.premik_cevi();
-            
-            // Preveri trk
-            if ovira.obrnjena == false {
-                if ovira.preveri_trk(x_ptice,self.ptica.y, sirina_ptice, visina_ptice, sirina_ovire, velikost_odprtine) {
-                    self.mode = GameMode::KonecIgre;
-                }
-            }
+            ovira.premik_cevi(dt);
 
             // Dodajanje točk
-            if !ovira.mimo && x_ptice > ovira.x + sirina_ovire {
-                ovira.zavrzena_ovira(true);
-                self.rezultat += 1;
+            if !ovira.mimo && x_ptice > ovira.x + sirina_ovire {     // Prištevamo rezultat samo od ene ovire
+                ovira.mimo = true;
+                if ovira.obrnjena {
+                    self.rezultat += 1;
+                }
             }
         }
-        // Retain obdrži samo tiste elemente, kjer je bool "true", ostale zavrže
-        self.ovire.retain(|ovira| !ovira.mimo_zaslona(sirina_ovire));
+        
+        // Retain obdrži samo tiste elemente, kjer je bool = true, ostale zavrže
+        self.ovire.retain(|ovira| ovira.mimo_zaslona(sirina_ovire));
             
     }
 }

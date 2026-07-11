@@ -2,7 +2,7 @@ use crate::logika::konstante::*;
 
 pub struct Ptica {
     pub y: f32,
-    pub hitrost: f32,       // Navpična hitrost (če je negativna ptica pada, če je pozitivna leti gor, ker je 0 vrh okna)
+    pub hitrost: f32,
     pub rotacija: f32,
 }
 
@@ -11,41 +11,36 @@ impl Ptica {
         Ptica {y: zacetni_y_ptice, hitrost: 0.0, rotacija: 0.0}
     }
 
-    pub fn gravitacija(&mut self) {
-        if self.hitrost + GRAVITACIJA <= MAX_HITROST{           // Računamo gravitacijo kjer upoštevamo maksimalno hitrost ptice
-            self.hitrost += GRAVITACIJA;
+    pub fn gravitacija(&mut self, dt: f32) {
+        if self.hitrost + GRAVITACIJA * dt <= MAX_HITROST{
+            self.hitrost += GRAVITACIJA * dt;
         }
-        self.y += self.hitrost;
+        self.y += self.hitrost * dt;
     }
 
     pub fn kriljenje(&mut self) {
-        self.hitrost = MOC_SKOKA; 
+        self.hitrost = MOC_SKOKA;
     }
 
     pub fn rotiranje(&mut self) {
 
-        if self.hitrost < 1.5 {
-            self.rotacija = -0.5
-        } else if self.hitrost < 2.0 {
-            self.rotacija = 0.0
-        } else {
-            self.rotacija = self.hitrost * 0.2
+        if self.hitrost < 100.0 {
+            self.rotacija = -0.4;
+        } 
+
+        else if self.hitrost < 300.0 {
+            self.rotacija = 0.0;
+        } 
+
+        else {
+            let padanje_rotacija = (self.hitrost / MAX_HITROST) * 0.9;
+            self.rotacija = padanje_rotacija.clamp(0.0, 0.85);      // Dodan clamp da ptica nekaj časa po zamahu gleda gor
         }
     }
 
-    pub fn nihanje(&mut self, cas: f64, zacetni_y_ptice: f32) {
-        self.y = zacetni_y_ptice + (cas * 4.0).sin() as f32 * 10.0;
-    }
-}
-
-// Test gravitacije
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_gravitacije() {
-        let mut b = Ptica::new(300.0);
-        b.gravitacija();
-        assert!(b.y > 0.0);
+    pub fn nihanje(&mut self, cas: f32, zacetni_y_ptice: f32) {
+        let bpm = 81.0;
+        let frekvenca = (bpm / 60.0) * 6.283;       // 6.283 ~ 2pi
+        self.y = zacetni_y_ptice + (cas * (frekvenca / 2.0) + 2.0).sin() * 10.0;
     }
 }

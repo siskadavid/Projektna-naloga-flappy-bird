@@ -9,11 +9,11 @@ fn okno_konfiguracija() -> Conf {
     Conf {
         window_title: "Flappy Bird".to_string(),
         fullscreen: true,
-        window_resizable: true,
+        window_resizable: true, 
         ..Default::default()
     }
 }
-#[macroquad::main(okno_konfiguracija)]     // Funkcija pred main ki nam nariše okno še preden preračunamo vse ostalo
+#[macroquad::main(okno_konfiguracija)]
 
 async fn main() {
 
@@ -23,90 +23,105 @@ async fn main() {
     let tla_texture: Texture2D = load_texture("slike/tla.png").await.unwrap();
     let pavza_texture: Texture2D = load_texture("slike/pavza.png").await.unwrap();
     let ovira_texture: Texture2D = load_texture("slike/ovira.png").await.unwrap();
+
     let flap_sound: Sound = load_sound("zvok/flap.wav").await.unwrap();
     let fall_sound: Sound = load_sound("zvok/fall.wav").await.unwrap();
     let hit_sound: Sound = load_sound("zvok/hit.wav").await.unwrap();
     let point_sound: Sound = load_sound("zvok/point.wav").await.unwrap();
-    // let gary: Sound = load_sound("zvok/Gary.ogg").await.unwrap();
+    let gary: Sound = load_sound("zvok/gary.ogg").await.unwrap();       // Največji file, zaradi njega traja loadanje na zacetku
 
     // Spremenljivke na začetku igre
     let zacetni_y_ptice = screen_height() * 0.25;
-    let mut igra = StanjeIgre::new(zacetni_y_ptice);
-    let mut trenutni_rezultat = 0;
+    let mut x_ptice = 0.0;
+    let mut visina_ptice = 0.0;
+    let mut sirina_ptice = 0.0;
 
+    let mut zacetni_x_ovire = 0.0;
+    let mut visina_ovire = 0.0;
+    let mut sirina_ovire = 0.0;
+    let mut velikost_odprtine = 0.0;
+
+    let mut sirina_ozadja = 0.0;
+
+    let mut igra = StanjeIgre::new(zacetni_y_ptice);
     let mut prilagojeno_okno = false;
 
-    // Glavna zanka, kjer se izvaja igra
+    let mut trenutni_rezultat = 0;
+    let mut rekord = 0;
+
+    let mut casovnik_smrti = 0.7; 
+    let mut cakam_na_restart = true;
+
+    // Glavna zanka
     loop {
 
-        // Nastavimo velikost okna
+        // Uporabimo delta time za neodvisnost od osveževalnega časa
+        let dt = get_frame_time();
+
+        // Preverjamo skok in pavzo takoj na zacetku
+        let skok = is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left);
+        let pavza = is_key_pressed(KeyCode::Escape);
+
+        // Prvič v loopu nastavimo velikost okna
         if !prilagojeno_okno {
 
+            // Pridobimo velikost celotnega ekrana
             let (zaslon_sirina, zaslon_visina) = miniquad::window::screen_size();
 
-            let okno_sirina = (zaslon_sirina * 0.35) as f32;
-            let okno_visina = (zaslon_visina * 0.85) as f32;
-
+            // Nastavimo velikost okna
+            let okno_sirina = (zaslon_sirina * 0.35).round();
+            let okno_visina = (zaslon_visina * 0.85).round();
             set_fullscreen(false);
             request_new_screen_size(okno_sirina, okno_visina);
             prilagojeno_okno = true;
+
+            // Izračunamo razne konstante, ki so odvisne od velikosti zaslona
+            x_ptice = (okno_sirina * 0.25).round();
+            visina_ptice = (okno_visina * 0.05).round();
+            sirina_ptice = (ptica_texture.width() * (okno_visina * 0.05 / ptica_texture.height())).round();       // Macroquad nima možnosti nastavitve ki ohrani aspect ratio, zato ga izračunamo
+            zacetni_x_ovire = (okno_sirina * 1.2).round();
+            visina_ovire = (okno_visina * 0.7).round();
+            sirina_ovire = (ovira_texture.width() * (okno_visina * 0.7 / ovira_texture.height())).round();
+            velikost_odprtine = (visina_ptice * 4.0).round();
+            sirina_ozadja = (ozadje_texture.width() * (okno_visina / ozadje_texture.height())).round();
         }
 
-        // Izračunane razne konstante, ki so odvisne od velikosti zaslona
-        let x_ptice = screen_width() * 0.25;
-        let zacetni_y_ptice = screen_height() * 0.25;
-        let visina_ptice = screen_height() * 0.05;
-        let sirina_ptice = ptica_texture.width() * (screen_height() * 0.05 / ptica_texture.height());       // Macroquad nima možnosti nastavitve ki ohrani aspect ratio, zato ga izračunamo
-
-        let zacetni_x_ovire = screen_width() * 1.2;
-        let visina_ovire = screen_height() * 0.5;
-        let sirina_ovire = ovira_texture.width() * (screen_height() * 0.5 / ovira_texture.height());
-        let velikost_odprtine = visina_ptice * 4.0;
-        
-        let sirina_ozadja = ozadje_texture.width() * (screen_height() / ozadje_texture.height());
-
-
         match igra.mode {
-
-            // Program v stanju Menu
             GameMode::Menu => {
 
-                // Predvajanje menu glasbe
-                // if !igra.glasba {
-                //     play_sound(&gary, PlaySoundParams {
-                //         looped: true,
-                //         volume: 0.6,
-                //     });
-                //     igra.glasba = true;
-                // }
+                //Predvajanje menu glasbe
+                if !igra.glasba {
+                    play_sound(&gary, PlaySoundParams {
+                        looped: true,
+                        volume: 0.6,
+                    });
+                    igra.glasba = true;
+                }
 
                 // Računanje pozicije ozadja in nihanje ptice
-                igra.bg(sirina_ozadja, screen_width());
-                igra.ptica.nihanje(get_time(), zacetni_y_ptice);
+                igra.bg(sirina_ozadja, screen_width(), dt);
+                igra.ptica.nihanje(get_time() as f32, zacetni_y_ptice);
 
                 // Začetek igre s pritiskom na presledek
-                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                if skok {
                     igra.mode = GameMode::Igra;
                     igra.ptica.kriljenje();
                     play_sound_once(&flap_sound);
                 }
             }
-            
-            // Program v stanju Igra
+
             GameMode::Igra => {
 
                 // Kriljenje
-                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                if skok {
                     igra.ptica.kriljenje();
                     play_sound_once(&flap_sound)
                 }
 
-                // Računanje pozicije ptice in ozadja
-                igra.bg(sirina_ozadja, screen_width());
-
-                // Premikanje ptice in ovir
-                igra.premikanje_ptice();
-                igra.premikanje_ovir(screen_height(), x_ptice, sirina_ptice, visina_ptice, sirina_ovire, visina_ovire, velikost_odprtine, zacetni_x_ovire);
+                // Računanje pozicije ptice, ozadja in ovir
+                igra.bg(sirina_ozadja, screen_width(), dt);
+                igra.premikanje_ptice(dt);
+                igra.premikanje_ovir(screen_height(), x_ptice, sirina_ovire, visina_ovire, velikost_odprtine, zacetni_x_ovire, dt);
 
                 // Preverimo ali smo dobili točko
                 if igra.rezultat > trenutni_rezultat {
@@ -114,34 +129,69 @@ async fn main() {
                     trenutni_rezultat += 1;
                 }
 
+                //Preverimo highscore
+                if trenutni_rezultat > rekord {
+                    rekord += 1;
+                }
+                
                 // Preverimo ali smo na tleh
                 if igra.ptica.y > screen_height() * 0.915 - visina_ptice {
-                    igra.mode = GameMode::KonecIgre;
+                    trenutni_rezultat = 0;
                     play_sound_once(&hit_sound);
+
+                    casovnik_smrti = 0.7; 
+                    cakam_na_restart = true;
+
+                    igra.mode = GameMode::KonecIgre;
+                }
+
+                // Preverimo trk z ovirami
+                if igra.preveri_trk(x_ptice, sirina_ptice, visina_ptice, sirina_ovire, velikost_odprtine) {
+                    trenutni_rezultat = 0;
+                    play_sound_once(&hit_sound);
+                    play_sound_once(&fall_sound);
+
+                    casovnik_smrti = 0.7; 
+                    cakam_na_restart = true;
+
+                    igra.mode = GameMode::KonecIgre;
                 }
 
                 // Preverimo ali pavziramo
-                if is_key_pressed(KeyCode::Escape) {
+                if pavza {
                     igra.mode = GameMode::Pavza
                 }
             }
 
-            // Program v stanju pavze
             GameMode::Pavza => {
 
                 // Preverimo ali odpavziramo
-                if is_key_pressed(KeyCode::Escape) {
+                if pavza {
                     igra.mode = GameMode::Igra
                 }
             }
 
-            // Program v stanju KonecIgre
             GameMode::KonecIgre => {
 
-                // stop_sound(&gary);
+                // Prenehamo predvajanje glasbe
+                stop_sound(&gary);
+
+                //Ptica pade na tla
+                if igra.ptica.y < screen_height() * 0.915 - visina_ptice {
+                    igra.premikanje_ptice(dt)
+                }
+
+                // Cooldown da ne začnemo nove igre takoj ponesreči
+                if cakam_na_restart {
+                    casovnik_smrti -= dt;
+                
+                    if casovnik_smrti <= 0.0 {
+                        cakam_na_restart = false;
+                    }
+                }
 
                 // Ponoven zagon igre
-                if is_key_pressed(KeyCode::Space) || is_mouse_button_pressed(MouseButton::Left) {
+                if skok && !cakam_na_restart {
                     igra = StanjeIgre::new(zacetni_y_ptice);
                 }
             }
@@ -150,7 +200,7 @@ async fn main() {
         // Risanje ozadja
         draw_texture_ex(                                    // Tla in ozadje se bosta premikala za dodatno iluzijo gibanja, to dosežemo z dvema setoma istih slik ki se premikata po ekranu
             &ozadje_texture,
-            igra.ozadje_x, 0.0, WHITE,       // Ne spreminjamo barve na sliki
+            igra.ozadje_x, 0.0, WHITE,
             DrawTextureParams {
                 dest_size: Some(vec2(sirina_ozadja, screen_height())),
                 ..Default::default()
@@ -213,11 +263,19 @@ async fn main() {
             GameMode::Menu => {
                 draw_text("PRITISNI PRESLEDEK", screen_width() * 0.22, screen_height() * 0.4, screen_height() * 0.048, WHITE);
             }
-            GameMode::KonecIgre => {
-                draw_text("GAME OVER", screen_width() * 0.3, screen_height() * 0.3, screen_height() * 0.065, RED);
-                draw_text("Pritisni za ponovni zacetek", screen_width() * 0.17, screen_height() * 0.35, screen_height() * 0.04, WHITE);
+
+            GameMode::Igra => {
+                draw_text(&format!("{}", igra.rezultat), screen_width() * 0.5, screen_height() * 0.09, screen_height() * 0.08, WHITE);
             }
+
+            GameMode::KonecIgre => {
+                draw_text("GAME OVER", screen_width() * 0.21, screen_height() * 0.3, screen_height() * 0.1, RED);
+                draw_text(&format!("TOCKE: {}  REKORD: {}", igra.rezultat, rekord), screen_width() * 0.2, screen_height() * 0.35, screen_height() * 0.05, WHITE);
+                draw_text("Pritisni za ponovni zacetek", screen_width() * 0.17, screen_height() * 0.42, screen_height() * 0.04, WHITE);
+            }
+
             GameMode::Pavza => {
+                draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::new(0.0, 0.0, 0.0, 0.6));      // Zatemnitev ekrana
                 draw_texture_ex(
                     &pavza_texture,
                     screen_width() * 0.84, screen_height() * 0.024, WHITE,
@@ -227,14 +285,11 @@ async fn main() {
                     },
                 );
             }
-            _ => {}
         }
 
-        next_frame().await              // Async funkcija se izvede enkrat na frame, počakamo na naslednjega
+        next_frame().await
     }
 }
 
 
-// točkovanje, high score, dodat game over pa pavza ekran
-
-// death na ceveh, odvisnost od frame rata, pavza na klik
+//lepsa koda, music toggle
